@@ -1,6 +1,10 @@
 package controller
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+)
+
+var Message string = "value"
 
 func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
@@ -11,7 +15,7 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	// If the message is "ping" reply with "Pong!"
 	if m.Content == "ping" {
-		s.ChannelMessageSend(m.ChannelID, "Pong!")
+		s.ChannelMessageSend(m.ChannelID, Message)
 	}
 
 	// If the message is "pong" reply with "Ping!"

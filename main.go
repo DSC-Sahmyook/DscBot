@@ -3,12 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/DSC-Sahmyook/dscbot/controller"
 	"github.com/bwmarrin/discordgo"
+	"github.com/gorilla/pat"
+	"github.com/urfave/negroni"
 )
 
 // Variables used for command line parameters
@@ -22,10 +25,24 @@ func init() {
 	flag.Parse()
 }
 
-func main() {
+// func setUp() {
+// 	mux := pat.New()
+// 	mux.Get("", func(w http.ResponseWriter, r *http.Request) {
+// 		fmt.Fprint(w, "hello world")
+// 	})
+// 	mux.Post("", func(w http.ResponseWriter, r *http.Request) {
+// 		controller.Message = r.FormValue("text")
+// 	})
+// 	n := negroni.Classic()
+// 	n.UseHandler(mux)
 
+// 	http.ListenAndServe(":8000", n)
+// }
+
+func wshandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "hellowoiefjweiofjweiofjweofiwejfoweifj")
 	// Create a new Discord session using the provided bot token.
-	dg, err := discordgo.New("Bot " + Token)
+	dg, err := discordgo.New("Bot " + "NzM2MTQwNzQwMzQ5OTE5MjMy.XxqefQ.iJNPUIte6dGnCxXcHEUAOaD9Rvs")
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
 		return
@@ -51,4 +68,22 @@ func main() {
 	<-sc
 	// Cleanly close down the Discord session.
 	dg.Close()
+}
+
+func main() {
+	// setUp()
+	mux := pat.New()
+	mux.Get("/home", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "hello woawefaefawefawefwefrld")
+	})
+	mux.Post("/", func(w http.ResponseWriter, r *http.Request) {
+		controller.Message = r.FormValue("text")
+		fmt.Println(r.FormValue("text"))
+	})
+	// mux.Get("/ws", wshandler)
+	mux.HandleFunc("/ws", wshandler)
+	n := negroni.Classic()
+	n.UseHandler(mux)
+
+	http.ListenAndServe(":8000", n)
 }
