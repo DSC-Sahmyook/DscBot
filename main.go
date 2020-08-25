@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/DSC-Sahmyook/dscbot/controller"
+	"github.com/DSC-Sahmyook/dscbot/secure"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -22,23 +23,9 @@ func init() {
 	flag.Parse()
 }
 
-// func setUp() {
-// 	mux := pat.New()
-// 	mux.Get("", func(w http.ResponseWriter, r *http.Request) {
-// 		fmt.Fprint(w, "hello world")
-// 	})
-// 	mux.Post("", func(w http.ResponseWriter, r *http.Request) {
-// 		controller.Message = r.FormValue("text")
-// 	})
-// 	n := negroni.Classic()
-// 	n.UseHandler(mux)
-
-// 	http.ListenAndServe(":8000", n)
-// }
-
 func main() {
-	// setUp()
-	dg, err := discordgo.New("Bot " + "NzM2MTQwNzQwMzQ5OTE5MjMy.XxqefQ.iJNPUIte6dGnCxXcHEUAOaD9Rvs")
+
+	dg, err := discordgo.New("Bot " + secure.DiscordToken)
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
 		return
