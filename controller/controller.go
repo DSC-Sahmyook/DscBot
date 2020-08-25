@@ -1,6 +1,11 @@
 package controller
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"database/sql"
+	"github.com/bwmarrin/discordgo"
+	_ "github.com/lib/pq"
+	"strconv"
+)
 
 func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
