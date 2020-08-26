@@ -9,5 +9,6 @@ require (
 	github.com/gorilla/mux v1.7.4 // indirect
 	github.com/gorilla/pat v1.0.1
 	github.com/jinzhu/gorm v1.9.15
+	github.com/lib/pq v1.1.1
 	github.com/urfave/negroni v1.0.0
 )

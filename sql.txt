@@ -1,0 +1,27 @@
+DB 정보
+name: dscbot
+password: dscbot0215
+
+데이터 베이스 테이블 생성
+
+create table channel_basic
+(
+	channelid varchar(50) not null,
+	channelinfo varchar(500) null, 
+	trellourl varchar(200) null,
+	activate boolean,
+	primary key (channelid)
+);
+
+create table channel_connected(
+	channelid varchar(50) not null,
+	connectionname varchar(45) null,
+	connectionurl varchar(200) null,
+	activate boolean
+);
+
+제약조건 추가
+
+alter table channel_connected add constraint
+ channelid foreign key(channelid)
+ references channel_basic(channelid);
