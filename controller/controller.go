@@ -22,19 +22,18 @@ func Board() string {
 		// Handle error
 	}
 
-	cards, err := board.GetCards(trello.Defaults())
-	if err != nil {
-		// Handle error
-	}
+	// cards, err := board.GetCards(trello.Defaults())
+	// if err != nil {
+	// 	// Handle error
+	// }
 	fmt.Println("[박기홍] lists 내용 확인")
 	for _, item := range lists {
-		fmt.Println(item.Name)
+		itemCards := item.Cards
+		fmt.Printf("[%s]\n", item.Name)
+		for _, card := range itemCards {
+			fmt.Println(card.Name)
+		}
 	}
-	fmt.Println("[박기홍] cards 내용 확인")
-	for _, item := range cards {
-		fmt.Println(item.Name)
-	}
-
 	return board.Name
 }
 
