@@ -121,7 +121,7 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 		}
 
 		//show info + url in discord + conntected info
-		s.ChannelMessageSend(m.ChannelID, "chanenlinfo: "+info+"\n trellourl: "+url+"\n"+conntectedstring)
+		s.ChannelMessageSend(m.ChannelID, "chanenlinfo: "+info+"\ntrellourl: "+url+"\n"+conntectedstring)
 		return
 	}
 	//insert info about conntected platfrom which isn't trello
@@ -191,7 +191,7 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		DBconnect(s, m, 2)
 	}
 	if strings.Contains(m.Content, "!명령어") {
-		s.ChannelMessageSend(m.ChannelID, "!채널갱신: 채널정보 초기화 및 업데이트\n예) !채널정보갱신 [채널정보]/[Trello url]\n!연결추가: Trello를 제외한 다른 플랫폼 정보\n예) !연결추가 [플랫폼이름]/[플랫폼 url]\n!채널정보: 채널정보 출력")
+		s.ChannelMessageSend(m.ChannelID, "!채널갱신: 채널정보 초기화 및 업데이트\n예) !채널정보갱신 [채널정보]/[Trello url]\n\n!연결추가: Trello를 제외한 다른 플랫폼 정보\n예) !연결추가 [플랫폼이름]/[플랫폼 url]\n\n!채널정보: 채널정보 출력")
 	}
 	if strings.Contains(m.Content, "!연결추가") {
 		DBconnect(s, m, 3)
