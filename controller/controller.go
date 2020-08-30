@@ -38,6 +38,7 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 		INFO := strings.Split(message, " ")
 		//if insert more than 2 things. go to noting
 		if len(INFO) != 2 {
+			s.ChannelMessageSend(m.ChannelID, "입력문 형식을 참고해주세요-> !명령어")
 			return
 		}
 		//first check
@@ -96,10 +97,11 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 			panic(err)
 		}
 		//connted info: conntectedname, conntectedurl
-		//여려개 select 받는거 찾아봐야됨.
+		//conntectedstring will be used in last print
 		var conntectedname string
 		var conntectedurl string
 		var conntectedstring string
+		//sql for search every conntected info with the channel
 		rows, err := db.Query("select connectionname, connectionurl from channel_connected where channelid=$1", m.ChannelID)
 		if err != nil {
 			panic(err)
@@ -108,6 +110,7 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 			if err := rows.Scan(&conntectedname, &conntectedurl); err != nil {
 				panic(err)
 			}
+			//add string for print
 			conntectedstring += conntectedname
 			conntectedstring += ": "
 			conntectedstring += conntectedurl
@@ -117,7 +120,7 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 			panic(err)
 		}
 
-		//show info + url in discord
+		//show info + url in discord + conntected info
 		s.ChannelMessageSend(m.ChannelID, "chanenlinfo: "+info+"\n trellourl: "+url+"\n"+conntectedstring)
 		return
 	}
@@ -128,6 +131,7 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 		INFO := strings.Split(message, " ")
 		//if insert more than 2 things. go to noting
 		if len(INFO) != 2 {
+			s.ChannelMessageSend(m.ChannelID, "입력문 형식을 참고해주세요-> !명령어")
 			return
 		}
 		//sql for insert into connected
