@@ -121,7 +121,7 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 		}
 
 		//show info + url in discord + conntected info
-		s.ChannelMessageSend(m.ChannelID, "chanenlinfo: "+info+"\ntrellourl: "+url+"\n"+conntectedstring)
+		s.ChannelMessageSend(m.ChannelID, "채널정보: "+info+"\n트렐로url: "+url+"\n"+conntectedstring)
 		return
 	}
 	//insert info about conntected platfrom which isn't trello
