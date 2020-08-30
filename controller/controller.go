@@ -97,10 +97,28 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 		}
 		//connted info: conntectedname, conntectedurl
 		//여려개 select 받는거 찾아봐야됨.
-		//var conntectedname string
-		//var conntectedurl string
+		var conntectedname string
+		var conntectedurl string
+		var conntectedstring string
+		rows, err := db.Query("select connectionname, connectionurl from channel_connected where channelid=$1", m.ChannelID)
+		if err != nil {
+			panic(err)
+		}
+		for rows.Next() {
+			if err := rows.Scan(&conntectedname, &conntectedurl); err != nil {
+				panic(err)
+			}
+			conntectedstring += conntectedname
+			conntectedstring += ": "
+			conntectedstring += conntectedurl
+			conntectedstring += "\n"
+		}
+		if err := rows.Err(); err != nil {
+			panic(err)
+		}
+
 		//show info + url in discord
-		s.ChannelMessageSend(m.ChannelID, "chanenlinfo: "+info+"\n trellourl: "+url)
+		s.ChannelMessageSend(m.ChannelID, "chanenlinfo: "+info+"\n trellourl: "+url+"\n"+conntectedstring)
 		return
 	}
 	//insert info about conntected platfrom which isn't trello
