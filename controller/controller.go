@@ -154,9 +154,14 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 		sqlStatement := `
 		delete from channel_connected where connectionname = $1
 		`
-		_, err := db.Exec(sqlStatement, message)
+		result, err := db.Exec(sqlStatement, message)
 		if err != nil {
 			panic(err)
+		}
+		n, err := result.RowsAffected()
+		if n == 0 {
+			s.ChannelMessageSend(m.ChannelID, "해당 연결정보를 찾을 수 없습니다.")
+			return
 		}
 		s.ChannelMessageSend(m.ChannelID, "연결정보삭제 완료")
 		return
