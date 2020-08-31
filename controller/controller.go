@@ -34,12 +34,19 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 	//create first input for channel_basic
 	if state == 1 {
 		message := m.Content
-		message = strings.Replace(message, "!item ", "", 1)
-		INFO := strings.Split(message, " ")
+		message = strings.Replace(message, "!채널갱신 ", "", 1)
+		INFO := strings.Split(message, "/")
+		//if insert more than 2 things. go to noting
+		if len(INFO) != 2 {
+			s.ChannelMessageSend(m.ChannelID, "입력문 형식을 참고해주세요-> !명령어")
+			return
+		}
 		//first check
-
 		var Notfirst bool
 		err := db.QueryRow("select activate from channel_basic where channelid=$1", m.ChannelID).Scan(&Notfirst)
+		if err != nil {
+			//error for first insert
+		}
 		//not the first time
 		if Notfirst == true {
 			//sql for update
@@ -59,10 +66,8 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 				fmt.Println("0 row update")
 			}
 
-			s.ChannelMessageSend(m.ChannelID, "채널정보갱신")
-			//test: view changes
-			//DBconnect(s, m, 2)
-
+			s.ChannelMessageSend(m.ChannelID, "채널정보갱신 완료")
+			//change DB channel_basic/channelinfo&&trellourl
 			return
 		} else { //first time
 			sqlStatement := `
@@ -73,7 +78,8 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 			if err != nil {
 				panic(err)
 			}
-			s.ChannelMessageSend(m.ChannelID, "추가완료")
+			s.ChannelMessageSend(m.ChannelID, "채널정보갱신 완료")
+			//insert DB Channel_basic/cahnnelinfo&&trellourl
 		}
 	}
 	//show info channelinfo && trellourl
@@ -90,8 +96,70 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 		if err != nil {
 			panic(err)
 		}
-		//show info + url in discord
-		s.ChannelMessageSend(m.ChannelID, "chanenlinfo: "+info+"\n trellourl: "+url)
+		//connted info: conntectedname, conntectedurl
+		//conntectedstring will be used in last print
+		var conntectedname string
+		var conntectedurl string
+		var conntectedstring string
+		//sql for search every conntected info with the channel
+		rows, err := db.Query("select connectionname, connectionurl from channel_connected where channelid=$1", m.ChannelID)
+		if err != nil {
+			panic(err)
+		}
+		for rows.Next() {
+			if err := rows.Scan(&conntectedname, &conntectedurl); err != nil {
+				panic(err)
+			}
+			//add string for print
+			conntectedstring += conntectedname
+			conntectedstring += ": "
+			conntectedstring += conntectedurl
+			conntectedstring += "\n"
+		}
+		if err := rows.Err(); err != nil {
+			panic(err)
+		}
+
+		//show info + url in discord + conntected info
+		s.ChannelMessageSend(m.ChannelID, "채널정보: "+info+"\n트렐로url: "+url+"\n"+conntectedstring)
+		return
+	}
+	//insert info about conntected platfrom which isn't trello
+	if state == 3 {
+		message := m.Content
+		message = strings.Replace(message, "!연결추가 ", "", 1)
+		INFO := strings.Split(message, "/")
+		//if insert more than 2 things. go to noting
+		if len(INFO) != 2 {
+			s.ChannelMessageSend(m.ChannelID, "입력문 형식을 참고해주세요-> !명령어")
+			return
+		}
+		//sql for insert into connected
+		sqlStatement := `
+		INSERT INTO channel_connected (channelid,connectionname,connectionurl,activate)
+		VALUES ($1, $2, $3, true)`
+		channelid := m.ChannelID
+		_, err = db.Exec(sqlStatement, channelid, INFO[0], INFO[1])
+		if err != nil {
+			panic(err)
+		}
+		s.ChannelMessageSend(m.ChannelID, "연결추가 완료")
+		return
+	}
+	//delete connect info
+	if state == 4 {
+		message := m.Content
+		message = strings.Replace(message, "!연결삭제 ", "", 1)
+		//sql for delete into connected
+		sqlStatement := `
+		delete from channel_connected where connectionname = $1
+		`
+		_, err := db.Exec(sqlStatement, message)
+		if err != nil {
+			panic(err)
+		}
+		s.ChannelMessageSend(m.ChannelID, "연결정보삭제 완료")
+		return
 	}
 }
 
@@ -129,11 +197,20 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	// If the message has "!item" add info to DB
-	if strings.Contains(m.Content, "!item") {
+	if strings.Contains(m.Content, "!채널갱신") {
 		DBconnect(s, m, 1)
 	}
 	// if the message has "!채널정보" show info in discord
 	if strings.Contains(m.Content, "!채널정보") {
 		DBconnect(s, m, 2)
+	}
+	if strings.Contains(m.Content, "!명령어") {
+		s.ChannelMessageSend(m.ChannelID, "!채널갱신: 채널정보 초기화 및 업데이트\n예) !채널정보갱신 [채널정보]/[Trello url]\n\n!연결추가: Trello를 제외한 다른 플랫폼 정보\n예) !연결추가 [플랫폼이름]/[플랫폼 url]\n\n!연결삭제: 연결된 플랫폼 정보 삭제 \n예)!연결삭제 [플랫폼이름]\n\n!채널정보: 채널정보 출력")
+	}
+	if strings.Contains(m.Content, "!연결추가") {
+		DBconnect(s, m, 3)
+	}
+	if strings.Contains(m.Content, "!연결삭제") {
+		DBconnect(s, m, 4)
 	}
 }
