@@ -91,8 +91,75 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 		if err != nil {
 			panic(err)
 		}
-		//show info + url in discord
-		s.ChannelMessageSend(m.ChannelID, "chanenlinfo: "+info+"\n trellourl: "+url)
+		//connted info: conntectedname, conntectedurl
+		//conntectedstring will be used in last print
+		var conntectedname string
+		var conntectedurl string
+		var conntectedstring string
+		//sql for search every conntected info with the channel
+		rows, err := db.Query("select connectionname, connectionurl from channel_connected where channelid=$1", m.ChannelID)
+		if err != nil {
+			panic(err)
+		}
+		for rows.Next() {
+			if err := rows.Scan(&conntectedname, &conntectedurl); err != nil {
+				panic(err)
+			}
+			//add string for print
+			conntectedstring += conntectedname
+			conntectedstring += ": "
+			conntectedstring += conntectedurl
+			conntectedstring += "\n"
+		}
+		if err := rows.Err(); err != nil {
+			panic(err)
+		}
+
+		//show info + url in discord + conntected info
+		s.ChannelMessageSend(m.ChannelID, "채널정보: "+info+"\n트렐로url: "+url+"\n"+conntectedstring)
+		return
+	}
+	//insert info about conntected platfrom which isn't trello
+	if state == 3 {
+		message := m.Content
+		message = strings.Replace(message, "!연결추가 ", "", 1)
+		INFO := strings.Split(message, "/")
+		//if insert more than 2 things. go to noting
+		if len(INFO) != 2 {
+			s.ChannelMessageSend(m.ChannelID, "입력문 형식을 참고해주세요-> !명령어")
+			return
+		}
+		//sql for insert into connected
+		sqlStatement := `
+		INSERT INTO channel_connected (channelid,connectionname,connectionurl,activate)
+		VALUES ($1, $2, $3, true)`
+		channelid := m.ChannelID
+		_, err = db.Exec(sqlStatement, channelid, INFO[0], INFO[1])
+		if err != nil {
+			panic(err)
+		}
+		s.ChannelMessageSend(m.ChannelID, "연결추가 완료")
+		return
+	}
+	//delete connect info
+	if state == 4 {
+		message := m.Content
+		message = strings.Replace(message, "!연결삭제 ", "", 1)
+		//sql for delete into connected
+		sqlStatement := `
+		delete from channel_connected where connectionname = $1
+		`
+		result, err := db.Exec(sqlStatement, message)
+		if err != nil {
+			panic(err)
+		}
+		n, err := result.RowsAffected()
+		if n == 0 {
+			s.ChannelMessageSend(m.ChannelID, "해당 연결정보를 찾을 수 없습니다.")
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, "연결정보삭제 완료")
+		return
 	}
 }
 
@@ -141,7 +208,7 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		DBconnect(s, m, 2)
 	}
 
-	if m.Content == "ping" {
+	if m.Content == "!ping" {
 		Board()
 	}
 }
