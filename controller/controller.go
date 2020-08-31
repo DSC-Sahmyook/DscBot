@@ -6,20 +6,15 @@ import (
 	"strings"
 
 	"github.com/DSC-Sahmyook/dscbot/api"
+	"github.com/DSC-Sahmyook/dscbot/secure"
 	"github.com/adlio/trello"
 	"github.com/bwmarrin/discordgo"
 	_ "github.com/lib/pq"
 )
 
-const (
-	DB_USER     = "dscbot"
-	DB_PASSWORD = "dscbot0215"
-	DB_NAME     = "dscbot"
-)
-
 //DBconnect for connect to postgresql
 func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
-	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", DB_USER, DB_PASSWORD, DB_NAME)
+	dbinfo := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", secure.HOST, secure.USER, secure.PASSWORD, secure.DBNAME)
 	//vaildate postgrewql db
 	db, err := sql.Open("postgres", dbinfo)
 	if err != nil {
@@ -35,12 +30,19 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 	//create first input for channel_basic
 	if state == 1 {
 		message := m.Content
-		message = strings.Replace(message, "!item ", "", 1)
-		INFO := strings.Split(message, " ")
+		message = strings.Replace(message, "!채널갱신 ", "", 1)
+		INFO := strings.Split(message, "/")
+		//if insert more than 2 things. go to noting
+		if len(INFO) != 2 {
+			s.ChannelMessageSend(m.ChannelID, "입력문 형식을 참고해주세요-> !명령어")
+			return
+		}
 		//first check
-
 		var Notfirst bool
 		err := db.QueryRow("select activate from channel_basic where channelid=$1", m.ChannelID).Scan(&Notfirst)
+		if err != nil {
+			//error for first insert
+		}
 		//not the first time
 		if Notfirst == true {
 			//sql for update
@@ -60,10 +62,8 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 				fmt.Println("0 row update")
 			}
 
-			s.ChannelMessageSend(m.ChannelID, "채널정보갱신")
-			//test: view changes
-			//DBconnect(s, m, 2)
-
+			s.ChannelMessageSend(m.ChannelID, "채널정보갱신 완료")
+			//change DB channel_basic/channelinfo&&trellourl
 			return
 		} else { //first time
 			sqlStatement := `
@@ -74,7 +74,8 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 			if err != nil {
 				panic(err)
 			}
-			s.ChannelMessageSend(m.ChannelID, "추가완료")
+			s.ChannelMessageSend(m.ChannelID, "채널정보갱신 완료")
+			//insert DB Channel_basic/cahnnelinfo&&trellourl
 		}
 	}
 	//show info channelinfo && trellourl
@@ -200,12 +201,21 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	// If the message has "!item" add info to DB
-	if strings.Contains(m.Content, "!item") {
+	if strings.Contains(m.Content, "!채널갱신") {
 		DBconnect(s, m, 1)
 	}
 	// if the message has "!채널정보" show info in discord
 	if strings.Contains(m.Content, "!채널정보") {
 		DBconnect(s, m, 2)
+	}
+	if strings.Contains(m.Content, "!명령어") {
+		s.ChannelMessageSend(m.ChannelID, "!채널갱신: 채널정보 초기화 및 업데이트\n예) !채널정보갱신 [채널정보]/[Trello url]\n\n!연결추가: Trello를 제외한 다른 플랫폼 정보\n예) !연결추가 [플랫폼이름]/[플랫폼 url]\n\n!연결삭제: 연결된 플랫폼 정보 삭제 \n예)!연결삭제 [플랫폼이름]\n\n!채널정보: 채널정보 출력")
+	}
+	if strings.Contains(m.Content, "!연결추가") {
+		DBconnect(s, m, 3)
+	}
+	if strings.Contains(m.Content, "!연결삭제") {
+		DBconnect(s, m, 4)
 	}
 
 	if m.Content == "!ping" {
