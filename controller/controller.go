@@ -35,7 +35,7 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 	if state == 1 {
 		message := m.Content
 		message = strings.Replace(message, "!채널갱신 ", "", 1)
-		INFO := strings.Split(message, "/")
+		INFO := strings.Split(message, "$")
 		//if insert more than 2 things. go to noting
 		if len(INFO) != 2 {
 			s.ChannelMessageSend(m.ChannelID, "입력문 형식을 참고해주세요-> !명령어")
@@ -128,7 +128,7 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 	if state == 3 {
 		message := m.Content
 		message = strings.Replace(message, "!연결추가 ", "", 1)
-		INFO := strings.Split(message, "/")
+		INFO := strings.Split(message, "$")
 		//if insert more than 2 things. go to noting
 		if len(INFO) != 2 {
 			s.ChannelMessageSend(m.ChannelID, "입력문 형식을 참고해주세요-> !명령어")
@@ -211,7 +211,7 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		DBconnect(s, m, 2)
 	}
 	if strings.Contains(m.Content, "!명령어") {
-		s.ChannelMessageSend(m.ChannelID, "!채널갱신: 채널정보 초기화 및 업데이트\n예) !채널정보갱신 [채널정보]/[Trello url]\n\n!연결추가: Trello를 제외한 다른 플랫폼 정보\n예) !연결추가 [플랫폼이름]/[플랫폼 url]\n\n!연결삭제: 연결된 플랫폼 정보 삭제 \n예)!연결삭제 [플랫폼이름]\n\n!채널정보: 채널정보 출력")
+		s.ChannelMessageSend(m.ChannelID, "!채널갱신: 채널정보 초기화 및 업데이트\n예) !채널정보갱신 [채널정보]$[Trello url]\n\n!연결추가: Trello를 제외한 다른 플랫폼 정보\n예) !연결추가 [플랫폼이름]$[플랫폼 url]\n\n!연결삭제: 연결된 플랫폼 정보 삭제 \n예)!연결삭제 [플랫폼이름]\n\n!채널정보: 채널정보 출력")
 	}
 	if strings.Contains(m.Content, "!연결추가") {
 		DBconnect(s, m, 3)
