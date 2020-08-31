@@ -1,6 +1,4 @@
 DB 정보
-name: dscbot
-password: dscbot0215
 
 데이터 베이스 테이블 생성
 

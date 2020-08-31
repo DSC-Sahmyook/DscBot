@@ -3,22 +3,18 @@ package controller
 import (
 	"database/sql"
 	"fmt"
+	"strings"
+
 	"github.com/DSC-Sahmyook/dscbot/api"
+	"github.com/DSC-Sahmyook/dscbot/secure"
 	"github.com/adlio/trello"
 	"github.com/bwmarrin/discordgo"
 	_ "github.com/lib/pq"
-	"strings"
-)
-
-const (
-	DB_USER     = "dscbot"
-	DB_PASSWORD = "dscbot0215"
-	DB_NAME     = "dscbot"
 )
 
 //DBconnect for connect to postgresql
 func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
-	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", DB_USER, DB_PASSWORD, DB_NAME)
+	dbinfo := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", secure.HOST, secure.USER, secure.PASSWORD, secure.DBNAME)
 	//vaildate postgrewql db
 	db, err := sql.Open("postgres", dbinfo)
 	if err != nil {
@@ -182,19 +178,21 @@ func Board() string {
 		// Handle error
 	}
 
-	cards, err := board.GetCards(trello.Defaults())
-	if err != nil {
-		// Handle error
-	}
+	// cards, err := board.GetCards(trello.Defaults())
+	// if err != nil {
+	// 	// Handle error
+	// }
 	fmt.Println("[박기홍] lists 내용 확인")
 	for _, item := range lists {
-		fmt.Println(item.Name)
-	}
-	fmt.Println("[박기홍] cards 내용 확인")
-	for _, item := range cards {
-		fmt.Println(item.Name)
-	}
+		itemCards, err := item.GetCards(trello.Defaults())
+		if err != nil {
 
+		}
+		fmt.Printf("[%s]\n", item.Name)
+		for _, card := range itemCards {
+			fmt.Println(card.Name)
+		}
+	}
 	return board.Name
 }
 
@@ -218,5 +216,9 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	if strings.Contains(m.Content, "!연결삭제") {
 		DBconnect(s, m, 4)
+	}
+
+	if m.Content == "!ping" {
+		Board()
 	}
 }
