@@ -12,8 +12,19 @@ import (
 	_ "github.com/lib/pq"
 )
 
+func dbconn() *sql.DB {
+	dbinfo := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", secure.HOST, secure.USER, secure.PASSWORD, secure.DBNAME)
+	//vaildate postgrewql db
+	db, err := sql.Open("postgres", dbinfo)
+	if err != nil {
+		panic(err)
+	}
+
+	return db
+}
+
 //DBconnect for connect to postgresql
-func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
+func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int, db *sql.DB) {
 	dbinfo := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", secure.HOST, secure.USER, secure.PASSWORD, secure.DBNAME)
 	//vaildate postgrewql db
 	db, err := sql.Open("postgres", dbinfo)
@@ -160,15 +171,25 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 			return
 		}
 		s.ChannelMessageSend(m.ChannelID, "연결정보삭제 완료")
+
 		return
 	}
+
 }
 
-var Message string = "value"
+func Board(s *discordgo.Session, m *discordgo.MessageCreate, db *sql.DB) string {
+	defer db.Close()
+	var trellourl string
+	err := db.QueryRow(`SELECT trellourl FROM channel_basic WHERE channelid=$1`, m.ChannelID).Scan(&trellourl)
+	if err != nil {
+		panic(err)
+	}
+	trellourl = strings.Replace(trellourl, "https://", "", 1)
 
-func Board() string {
+	boardID := strings.Split(trellourl, "/")[2]
+
 	// *trello.Board
-	board, err := api.Client.GetBoard("I8850kOn", trello.Defaults())
+	board, err := api.Client.GetBoard(boardID, trello.Defaults())
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -182,6 +203,7 @@ func Board() string {
 	// if err != nil {
 	// 	// Handle error
 	// }
+
 	fmt.Println("[박기홍] lists 내용 확인")
 	for _, item := range lists {
 		itemCards, err := item.GetCards(trello.Defaults())
@@ -202,23 +224,23 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	// If the message has "!item" add info to DB
 	if strings.Contains(m.Content, "!채널갱신") {
-		DBconnect(s, m, 1)
+		DBconnect(s, m, 1, dbconn())
 	}
 	// if the message has "!채널정보" show info in discord
 	if strings.Contains(m.Content, "!채널정보") {
-		DBconnect(s, m, 2)
+		DBconnect(s, m, 2, dbconn())
 	}
 	if strings.Contains(m.Content, "!명령어") {
 		s.ChannelMessageSend(m.ChannelID, "!채널갱신: 채널정보 초기화 및 업데이트\n예) !채널정보갱신 [채널정보]$[Trello url]\n\n!연결추가: Trello를 제외한 다른 플랫폼 정보\n예) !연결추가 [플랫폼이름]$[플랫폼 url]\n\n!연결삭제: 연결된 플랫폼 정보 삭제 \n예)!연결삭제 [플랫폼이름]\n\n!채널정보: 채널정보 출력")
 	}
 	if strings.Contains(m.Content, "!연결추가") {
-		DBconnect(s, m, 3)
+		DBconnect(s, m, 3, dbconn())
 	}
 	if strings.Contains(m.Content, "!연결삭제") {
-		DBconnect(s, m, 4)
+		DBconnect(s, m, 4, dbconn())
 	}
 
 	if m.Content == "!ping" {
-		Board()
+		Board(s, m, dbconn())
 	}
 }
