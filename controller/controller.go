@@ -177,7 +177,7 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int, db *
 
 }
 
-func Board(s *discordgo.Session, m *discordgo.MessageCreate, db *sql.DB) string {
+func Board(s *discordgo.Session, m *discordgo.MessageCreate, db *sql.DB) {
 	defer db.Close()
 	var trellourl string
 	err := db.QueryRow(`SELECT trellourl FROM channel_basic WHERE channelid=$1`, m.ChannelID).Scan(&trellourl)
@@ -188,6 +188,7 @@ func Board(s *discordgo.Session, m *discordgo.MessageCreate, db *sql.DB) string 
 
 	boardID := strings.Split(trellourl, "/")[2]
 
+	var itemcards string
 	// *trello.Board
 	board, err := api.Client.GetBoard(boardID, trello.Defaults())
 	if err != nil {
@@ -196,26 +197,23 @@ func Board(s *discordgo.Session, m *discordgo.MessageCreate, db *sql.DB) string 
 
 	lists, err := board.GetLists(trello.Defaults())
 	if err != nil {
-		// Handle error
+		fmt.Print(err)
 	}
 
-	// cards, err := board.GetCards(trello.Defaults())
-	// if err != nil {
-	// 	// Handle error
-	// }
-
-	fmt.Println("[박기홍] lists 내용 확인")
 	for _, item := range lists {
 		itemCards, err := item.GetCards(trello.Defaults())
 		if err != nil {
-
+			fmt.Print(err)
 		}
 		fmt.Printf("[%s]\n", item.Name)
-		for _, card := range itemCards {
-			fmt.Println(card.Name)
+		itemcards += fmt.Sprintf("[%s]\n", item.Name)
+		for i, card := range itemCards {
+
+			itemcards += fmt.Sprintf("%d. %s\n", i+1, card.Name)
+
 		}
 	}
-	return board.Name
+	s.ChannelMessageSend(m.ChannelID, "Todolist입니다.\n"+itemcards)
 }
 
 func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -232,7 +230,7 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	if strings.Contains(m.Content, "!명령어") {
 		s.ChannelMessageSend(m.ChannelID, "!채널갱신: 채널정보 초기화 및 업데이트\n예) !채널정보갱신 [채널정보]$[Trello url]\n\n!연결추가: Trello를 제외한 다른 플랫폼 정보\n예) !연결추가 [플랫폼이름]$[플랫폼 url]\n\n!연결삭제: 연결된 플랫폼 정보 삭제 \n예)!연결삭제 [플랫폼이름]\n\n!채널정보: 채널정보 출력")
-	}
+	} //awefawefawefawerfawefasdfasdf
 	if strings.Contains(m.Content, "!연결추가") {
 		DBconnect(s, m, 3, dbconn())
 	}
