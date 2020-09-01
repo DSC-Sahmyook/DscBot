@@ -166,7 +166,12 @@ func DBconnect(s *discordgo.Session, m *discordgo.MessageCreate, state int) {
 
 var Message string = "value"
 
-func Board() string {
+var board string
+var lists string
+var Cards string
+
+func Board(s *discordgo.Session, m *discordgo.MessageCreate, level int) {
+	var itemcards string
 	// *trello.Board
 	board, err := api.Client.GetBoard("I8850kOn", trello.Defaults())
 	if err != nil {
@@ -175,25 +180,26 @@ func Board() string {
 
 	lists, err := board.GetLists(trello.Defaults())
 	if err != nil {
-		// Handle error
+		fmt.Print(err)
 	}
 
-	// cards, err := board.GetCards(trello.Defaults())
-	// if err != nil {
-	// 	// Handle error
-	// }
-	fmt.Println("[박기홍] lists 내용 확인")
-	for _, item := range lists {
-		itemCards, err := item.GetCards(trello.Defaults())
-		if err != nil {
+	if level == 1 {
 
-		}
-		fmt.Printf("[%s]\n", item.Name)
-		for _, card := range itemCards {
-			fmt.Println(card.Name)
+		for _, item := range lists {
+			itemCards, err := item.GetCards(trello.Defaults())
+			if err != nil {
+				fmt.Print(err)
+			}
+			fmt.Printf("[%s]\n", item.Name)
+			itemcards += fmt.Sprintf("[%s]\n", item.Name)
+			for i, card := range itemCards {
+
+				itemcards += fmt.Sprintf("%d. %s\n", i+1, card.Name)
+
+			}
 		}
 	}
-	return board.Name
+	s.ChannelMessageSend(m.ChannelID, "Todolist입니다.\n"+itemcards+"\n"+Cards)
 }
 
 func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -219,6 +225,6 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if m.Content == "!ping" {
-		Board()
+		Board(s, m, 1)
 	}
 }
